@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Gestion de Scolarité</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#1e3a5f"><link rel="icon" href="icon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="locked">
+<div id="auth"><form id="authForm" class="card">
+<h2 id="authTitle">Connexion</h2>
+<div class="field" id="aNomF" style="display:none"><label>Nom complet</label><input id="aNom"></div>
+<div class="field"><label>Utilisateur</label><input id="aLogin" autocomplete="username" required></div>
+<div class="field"><label>Mot de passe</label><input id="aPass" type="password" autocomplete="current-password" required></div>
+<p class="hint" id="aPwHint"></p>
+<button class="btn gold" id="aBtn" style="margin-top:10px;width:100%">Se connecter</button>
+<p class="hint" id="aHint"></p></form></div>
+
+<header class="app">
+  <div class="seal" id="sealBadge">EC</div>
+  <div>
+    <div class="title" id="headerSchoolName">Gestion de Scolarité</div>
+    <div class="subtitle" id="headerYear">Configurez votre établissement dans l'onglet "Configuration"</div>
+  </div>
+<div id="userBar"></div></header>
+
+<nav class="tabs no-print">
+  <button data-tab="config" class="active">⚙️ Configuration</button>
+  <button data-tab="classes">🏫 Classes &amp; Matières</button>
+  <button data-tab="profs">👩‍🏫 Professeurs</button>
+  <button data-tab="eleves">👨‍🎓 Élèves</button>
+  <button data-tab="absences">🗓️ Absences</button>
+  <button data-tab="notes">📝 Saisie des notes</button>
+  <button data-tab="bulletins">📊 Résultats &amp; Bulletins</button>
+  <button data-tab="stats">📈 Statistiques</button>
+  <button data-tab="parent">👪 Bulletin de mon enfant</button>
+</nav>
+
+<main>
+
+<!-- ============ TAB CONFIG ============ -->
+<section id="tab-config" class="tabpanel">
+  <div class="card">
+    <h2>Sigle / Logo de l'école</h2>
+    <p class="hint">Ce sigle apparaîtra dans l'en-tête de l'application et sur chaque bulletin.</p>
+    <div class="logo-upload-box">
+      <div class="logo-preview empty" id="logoPreview">Aucun sigle</div>
+      <div>
+        <input type="file" id="logoInput" accept="image/*" onchange="handleLogoUpload(this.files[0])">
+        <div class="row" style="margin-top:8px;">
+          <button class="btn ghost small" onclick="removeLogo()">✕ Retirer le sigle</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Informations de l'établissement</h2>
+    <div class="row">
+      <div class="field"><label>Nom de l'école</label><input id="cfgNomEcole" placeholder="Ex: Complexe Scolaire Al-Houda"></div>
+      <div class="field"><label>Sigle (texte court)</label><input id="cfgSigle" maxlength="6" placeholder="Ex: CSH"></div>
+      <div class="field"><label>Devise (optionnel)</label><input id="cfgDevise" placeholder="Ex: Travail – Discipline – Réussite"></div>
+      <div class="field"><label>Seuils des mentions /20 (Passable;Assez bien;Bien;Très bien)</label><input id="cfgMentions" placeholder="10;12;14;16"></div>
+      <div class="field"><label>Année scolaire</label><input id="cfgAnnee" placeholder="Ex: 2025-2026"></div>
+      <div class="field">
+        <label>Type d'école</label>
+        <select id="cfgType">
+          <option value="classique">Classique (français)</option>
+          <option value="franco-arabe">Franco-Arabe (bilingue français/arabe)</option>
+        </select>
+      </div>
+      <div class="field"><label>Notes sur</label><input id="cfgNoteSur" type="number" value="20"></div>
+      <div class="field"><label>Seuil d'admission (moyenne)</label><input id="cfgSeuil" type="number" value="10" step="0.5"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Périodes de l'année (trimestres / semestres)</h2>
+    <p class="hint">Définissez vous-même vos périodes : chaque école a son propre calendrier.</p>
+    <div class="pill-list" id="periodesList"></div>
+    <div class="row">
+      <div class="field"><label>Ajouter une période</label><input id="newPeriode" placeholder="Ex: 1er Trimestre"></div>
+      <button class="btn ghost" onclick="addPeriode()">+ Ajouter</button>
+      <button class="btn ghost" onclick="quickPeriodes(3)">Modèle: 3 Trimestres</button>
+      <button class="btn ghost" onclick="quickPeriodes(2)">Modèle: 2 Semestres</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Composition de la note (par matière)</h2>
+    <p class="hint">Définissez les catégories d'évaluation et leur poids (%). Le total doit faire 100%.</p>
+    <table id="catTable">
+      <thead><tr><th>Catégorie</th><th>Poids (%)</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="row" style="margin-top:10px;">
+      <div class="field"><label>Nouvelle catégorie</label><input id="newCatNom" placeholder="Ex: Devoirs"></div>
+      <div class="field"><label>Poids %</label><input id="newCatPoids" type="number" value="50"></div>
+      <button class="btn ghost" onclick="addCategorie()">+ Ajouter</button>
+    </div>
+    <div class="row">
+      <button class="btn ghost small" onclick="quickComposition('de')">Modèle: Devoirs + Examen</button>
+      <button class="btn ghost small" onclick="quickComposition('ide')">Modèle: Interro + Devoirs + Examen</button>
+      <button class="btn ghost small" onclick="quickComposition('u')">Modèle: Note unique</button>
+    </div>
+    <p id="catSum" class="hint"></p>
+  </div>
+
+  <div class="card"><h2>Verrouillage des périodes</h2><p class="hint">Une période verrouillée ne peut plus être modifiée par les professeurs.</p><div id="closeList"></div></div>
+  <div class="card"><h2>Publication aux parents</h2><p class="hint">Les parents ne voient que les bulletins des périodes publiées ici.</p><div id="pubList"></div></div>
+  <button class="btn gold" onclick="saveConfig()">💾 Enregistrer la configuration</button>
+</section>
+
+<!-- ============ TAB CLASSES ============ -->
+<section id="tab-classes" class="tabpanel" style="display:none;">
+  <div class="card">
+    <h2>Créer une classe / filière</h2>
+    <div class="row">
+      <div class="field"><label>Nom de la classe</label><input id="newClasseNom" placeholder="Ex: 3ème A"></div>
+      <div class="field"><label>Filière (optionnel)</label><input id="newClasseFiliere" placeholder="Ex: Scientifique"></div>
+      <button class="btn" onclick="addClasse()">+ Créer la classe</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Liste des classes</h2>
+    <div id="classesList" class="empty">Aucune classe créée pour le moment.</div>
+  </div>
+
+  <div class="card" id="matieresCard" style="display:none;">
+    <h2>Matières de <span id="matieresClasseNom"></span></h2>
+    <div class="row">
+      <div class="field"><label>Choix rapide d'une matière courante</label>
+        <select id="matierePreset" onchange="applyMatierePreset(this.value)">
+          <option value="">— choisir dans la liste —</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Nom de la matière (FR)</label><input id="newMatNom" placeholder="Ex: Mathématiques"></div>
+      <div class="field arabe-only" id="newMatArField" style="display:none;"><label>Nom de la matière (AR)</label><input id="newMatAr" class="ar" placeholder="الرياضيات"></div>
+      <div class="field"><label>Coefficient</label><input id="newMatCoef" type="number" value="1" step="0.5"></div>
+      <button class="btn" onclick="addMatiere()">+ Ajouter la matière</button>
+    </div>
+    <table>
+      <thead><tr><th>Matière</th><th id="arColHead" style="display:none;">Arabe</th><th>Coefficient</th><th></th></tr></thead>
+      <tbody id="matieresTbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ TAB ELEVES ============ -->
+<section id="tab-eleves" class="tabpanel" style="display:none;">
+  <div class="card">
+    <h2>Ajouter un élève</h2>
+    <div class="row">
+      <div class="field"><label>Classe</label><select id="elClasse"></select></div>
+      <div class="field"><label>Matricule</label><input id="elMatricule" placeholder="N° matricule"></div>
+      <div class="field"><label>Nom</label><input id="elNom"></div>
+      <div class="field"><label>Prénom</label><input id="elPrenom"></div>
+      <div class="field"><label>Sexe</label>
+        <select id="elSexe"><option value="M">M</option><option value="F">F</option></select>
+      </div>
+      <div class="field"><label>Date de naissance</label><input id="elDateNaissance" type="date"></div>
+      <div class="field"><label>Parent / tuteur</label><input id="elParent"></div>
+      <div class="field"><label>Téléphone du parent (+indicatif)</label><input id="elTel" inputmode="tel" placeholder="+22370000000"></div>
+      <button class="btn" onclick="addEleve()">+ Ajouter l'élève</button>
+      <div class="field"><label>Importer un CSV dans la classe choisie (matricule;nom;prénom;sexe;naissance)</label><input type="file" accept=".csv,.txt" onchange="importCSV(this.files[0]);this.value=''"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-tools">
+      <h2 style="margin:0;">Liste des élèves</h2>
+      <div class="field" style="margin:0;"><select id="elFiltreClasse" onchange="renderEleves()"></select></div>
+      <div class="field" style="margin:0;flex:2"><input id="elSearch" placeholder="🔍 Rechercher un élève (nom, prénom, matricule)" oninput="renderEleves()"></div>
+    </div>
+    <div id="elevesList" class="empty">Aucun élève enregistré.</div>
+  </div>
+</section>
+
+<section id="tab-profs" class="tabpanel" style="display:none;">
+<div class="card"><h2>Comptes</h2>
+<div class="row"><div class="field"><label>Nom</label><input id="uNom"></div><div class="field"><label>Utilisateur</label><input id="uLogin"></div><div class="field"><label>Mot de passe par défaut (modifiable)</label><input id="uPass" autocomplete="off"></div><div class="field"><label>Rôle</label><select id="uRole"><option value="prof">Professeur</option><option value="admin">Administrateur</option><option value="parent">Parent / élève (lecture du bulletin)</option></select></div>
+<div class="field"><label>Matricule(s) de l'enfant (si parent)</label><input id="uMats" placeholder="Ex: M1, M2"></div><button class="btn" onclick="addUser()">+ Créer</button></div>
+<p class="hint" id="uPwHint"></p>
+<div id="usersList"></div></div>
+<div class="card"><h2>Affectations : professeur, classe, matière</h2>
+<p class="hint">Un professeur ne voit et ne saisit que les notes des matières qui lui sont affectées.</p>
+<div class="row"><div class="field"><label>Professeur</label><select id="afProf"></select></div><div class="field"><label>Classe</label><select id="afClasse" onchange="fillAfMat()"></select></div><div class="field"><label>Matière</label><select id="afMat"></select></div><button class="btn" onclick="addAffectation()">+ Affecter</button></div>
+<div id="affList"></div></div>
+<div class="card"><h2>Licence</h2><p id="licInfo" class="hint"></p><div class="row"><div class="field"><label>Activer ou renouveler la licence (fichier .json reçu de votre fournisseur)</label><input type="file" accept=".json" onchange="activateLicense(this.files[0]);this.value=''"></div></div></div>
+<div class="card"><h2>Sauvegarde et journal</h2><div class="row"><button class="btn ghost" onclick="backup()">⬇️ Télécharger une sauvegarde</button><div class="field"><label>Restaurer une sauvegarde</label><input type="file" accept=".json" onchange="restore(this.files[0]);this.value=''"></div><button class="btn ghost" onclick="showLog()">📜 Journal des notes</button></div><p class="hint">Une copie automatique est aussi enregistrée chaque jour dans le dossier « backups ».</p><div id="logList"></div></div></section>
+
+<section id="tab-absences" class="tabpanel" style="display:none;"><div class="card"><h2>Appel : absences et retards</h2>
+<div class="row"><div class="field"><label>Classe</label><select id="abClasse" onchange="renderAbs()"></select></div><div class="field"><label>Date</label><input id="abDate" type="date" onchange="renderAbs()"></div><button class="btn gold" onclick="saveAbs()">💾 Enregistrer l'appel</button></div>
+<div id="absZone"></div></div></section>
+<section id="tab-parent" class="tabpanel" style="display:none;"><div class="card"><h2>Bulletin de mon enfant</h2><div class="row"><div class="field"><label>Élève</label><select id="pEnf" onchange="renderParent()"></select></div><div class="field"><label>Période</label><select id="pPer" onchange="renderParent()"></select></div><button class="btn gold" onclick="printParent()">🖨️ Imprimer</button></div></div><div id="pZone"></div></section>
+
+<!-- ============ TAB NOTES ============ -->
+<section id="tab-notes" class="tabpanel" style="display:none;">
+  <div class="card">
+    <h2>Saisie des notes</h2>
+    <div class="row class-select-row">
+      <div class="field"><label>Classe</label><select id="noteClasse" onchange="renderSaisieNotes()"></select></div>
+      <div class="field"><label>Période</label><select id="notePeriode" onchange="renderSaisieNotes()"></select></div>
+      <div class="field"><label>Matière</label><select id="noteMatiere" onchange="renderSaisieNotes()"></select></div>
+      <div class="field"><label>Rechercher un élève</label><input id="noteSearch" placeholder="Nom, prénom ou matricule" oninput="filterNotes()"></div>
+    </div>
+    <div class="row" id="noteTarget" style="border:1px solid var(--line);padding:10px;border-radius:4px;background:var(--mint)">
+      <div class="field" style="flex:2"><label>Élève concerné</label><select id="noteEleve"></select></div>
+      <div class="field"><label>Catégorie</label><select id="noteCat"></select></div>
+      <div class="field"><label>Note</label><input id="noteVal" type="number" step="0.25" min="0" inputmode="decimal"></div>
+      <button class="btn gold" onclick="addNoteCiblee()">+ Enregistrer la note</button>
+    </div>
+    <p class="hint">Vous ne pouvez saisir que les notes des matières qui vous sont affectées : choisissez un élève précis ci-dessus ou saisissez directement dans le tableau.</p>
+    <div id="saisieZone"></div>
+  </div>
+</section>
+
+<!-- ============ TAB BULLETINS ============ -->
+<section id="tab-bulletins" class="tabpanel" style="display:none;">
+  <div class="card no-print">
+    <h2>Classement &amp; bulletins</h2>
+    <div class="row class-select-row">
+      <div class="field"><label>Classe</label><select id="resClasse" onchange="renderClassement()"></select></div>
+      <div class="field"><label>Période</label><select id="resPeriode" onchange="renderClassement()"></select></div>
+      <div class="field"><label>Rechercher un élève</label><input id="resSearch" placeholder="Nom ou matricule" oninput="renderClassement()"></div>
+      <label style="display:flex;gap:6px;align-items:center;margin-bottom:10px"><input type="checkbox" id="recapDetail" style="width:auto" onchange="renderClassement()"> Inclure le détail des matières (écran et impression)</label>
+      <button class="btn gold" onclick="renderBulletins()">📄 Toute la classe</button>
+      <button class="btn ghost" onclick="printBulletins()">🖨️ Tous les bulletins</button>
+      <button class="btn gold" onclick="printRecap()">📋 Imprimer le tableau des résultats</button>
+      <button class="btn ghost" onclick="exportClassementCSV()">⬇️ Exporter en CSV</button>
+      <button class="btn ghost" onclick="exportExcel()">📗 Exporter Excel</button>
+    </div>
+    <div id="classementZone"></div>
+  </div>
+  <div id="bulletinsZone"></div>
+</section>
+
+<!-- ============ TAB STATISTIQUES ============ -->
+<section id="tab-stats" class="tabpanel" style="display:none;">
+  <div class="card no-print">
+    <h2>Statistiques</h2>
+    <div class="row class-select-row">
+      <div class="field"><label>Période</label><select id="statPeriode" onchange="renderStats()"></select></div>
+      <div class="field"><label>Classe</label><select id="statClasse" onchange="renderStats()"><option value="">Toutes les classes (vue d'ensemble)</option></select></div>
+      <button class="btn ghost" onclick="exportStatsCSV()">⬇️ Exporter les statistiques en CSV</button>
+    </div>
+  </div>
+  <div id="statsZone"></div>
+</section>
+
+</main>
+
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js" defer></script>
+</body>
+</html>

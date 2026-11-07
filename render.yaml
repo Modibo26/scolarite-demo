@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: scolarite-demo
+    runtime: node
+    plan: free
+    buildCommand: echo "aucune dépendance à installer"
+    startCommand: node server.js
+    healthCheckPath: /api/status
+    envVars:
+      - key: DEMO
+        value: "1"
+      - key: TRUST_PROXY
+        value: "1"
